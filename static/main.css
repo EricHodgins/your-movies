@@ -1,3 +1,44 @@
 h1 {
-	color: blue;
+	text-align: center;
+	border-bottom: 3px solid #001;
+	padding-bottom: 10px;
+	font-family: sans-serif;
+}
+
+body {
+	background-color: #888;
+}
+
+table {
+	border: 1px solid #001;
+	font-family: sans-serif;
+	margin-bottom: 200px;
+	margin: auto;
+	padding: 50px;
+}
+
+tr {
+	line-height: 30px;
+}
+
+input[type="submit"] {
+	position: relative;
+	margin-top: 25px;
+	left: 50%;
+}
+
+footer {
+	border-top: 1px solid #001;
+	position: absolute;
+	text-align: center;
+	line-height: 60px;
+	bottom: 0;
+	width: 100%;
+	height: 60px;
+	font-size: 10px;
+	background-color: #717181;
+}
+
+.error {
+	color: rgb(171, 78, 78);
 }
