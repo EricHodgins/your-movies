@@ -131,13 +131,28 @@ class Welcome(Signup):
 		hmac_hash = make_secure_val(user_id)
 		if cookie_val == hmac_hash:
 			u = User.get_by_id(int(user_id))
-			self.render("welcome.html", username=u.name)
+			print '===='*20
+			print u.movies
+			self.render("welcome.html", username=u.name, movies=u.movies)
 		else:
 			self.redirect('/login')
 			return 
 			
-		print "Here is Cookie %s" % cookie_val
-		print "Here it is using hashing funciont: %s" % hmac_hash
+	def post(self):
+
+		movie = self.request.get('movie')
+		cookie_val = self.request.cookies.get('user_id')
+		user_id = self.get_id(cookie_val)
+		hmac_hash = make_secure_val(user_id)
+		u = User.get_by_id(int(user_id))
+		if cookie_val == hmac_hash and movie:
+			if movie not in u.movies:
+				u.movies.append(movie)
+				u.put()
+				self.render("welcome.html", username=u.name, movies=u.movies)
+		else:
+			error_message = "Oops, you forgot to enter a movie."
+			self.render("welcome.html", error_message=error_message, username=u.name, movies=u.movies)
 
 
 	def get_id(self, cookie_val):
@@ -201,7 +216,7 @@ class User(db.Model):
 	name = db.StringProperty(required=True)
 	pw_hash = db.StringProperty(required=True)
 	email = db.StringProperty()
-	movie = db.StringProperty()
+	movies = db.StringListProperty(default=None)
 	available = db.StringProperty()
 
 	@classmethod
