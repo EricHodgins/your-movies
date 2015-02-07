@@ -4,4 +4,24 @@
 
 {% block content %}
 	<h1>Welcome, {{ username }}!</h1>
+	<form action="/logout">
+		<input type="hidden">
+		<input class="logout-button" type="submit" value="logout">
+	</form>
+	<form method="post">
+		<table>
+			<tr>
+				<td>Movie Request</td>
+				<td><input type="text" name="movie"></td>
+				<td style="color: red;">{{ error_message }}</td>
+			</tr>
+		</table>
+		<input type="submit" value="Add">
+
+		<ol>
+			{% for new_movie in movies %}
+			<li>{{ new_movie }}</li>
+			{% endfor %}
+		</ol>
+	</form>
 {% endblock %}
