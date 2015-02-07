@@ -22,6 +22,7 @@ import re
 import random
 import hashlib
 import hmac
+import time
 from string import letters
 
 
@@ -100,7 +101,15 @@ class Signup(MainHandler):
 			self.render("signup.html", **params)
 		else:
 			if not self.check_if_user_exists():  # Also adds the user if it doesn't exist.
+				time.sleep(5)
+				u = User.by_name(self.username)  #						<--------  Probably can refactor this.
+				cookie_val = make_secure_val(str(u.key().id()))
+				self.response.headers.add_header('Set-Cookie', '%s=%s; Path=/' % ('user_id', cookie_val))
+
+
 				self.redirect('/welcome')
+
+
 
 	def check_if_user_exists(self):
 		u = User.by_name(self.username)
@@ -115,9 +124,25 @@ class Signup(MainHandler):
 
 
 
-class Welcome(MainHandler):
+class Welcome(Signup):
 	def get(self):
-		self.render("welcome.html")
+		cookie_val = self.request.cookies.get('user_id')
+		user_id = self.get_id(cookie_val)
+		hmac_hash = make_secure_val(user_id)
+		if cookie_val == hmac_hash:
+			u = User.get_by_id(int(user_id))
+			self.render("welcome.html", username=u.name)
+		else:
+			self.redirect('/login')
+			return 
+			
+		print "Here is Cookie %s" % cookie_val
+		print "Here it is using hashing funciont: %s" % hmac_hash
+
+
+	def get_id(self, cookie_val):
+		return cookie_val.split('|')[0]
+
 
 
 class Login(MainHandler):
@@ -129,11 +154,19 @@ class Login(MainHandler):
 		password = self.request.get('password')
 
 		if User.login(username, password):
+			u = User.by_name(username)
+			cookie_val = make_secure_val(str(u.key().id()))
+			self.response.headers.add_header('Set-Cookie', '%s=%s; Path=/' % ('user_id', cookie_val))
 			self.redirect('/welcome')
 		else:
 			err_msg = "Sorry that's an invalid password or username."
 			self.render("login.html", error_username=err_msg)
 
+
+class Logout(MainHandler):
+	def get(self):
+		self.response.headers.add_header('Set-Cookie', 'user_id=; Path=/')
+		self.redirect('/login')
 
 
 
@@ -155,8 +188,12 @@ def valid_pw(name, pw, h):
 	else:
 		return False
 
-def secure_cookie(name, val):
-	cookie_val = 
+# secure cookies
+SECRET = 'supersecret'
+def make_secure_val(val):
+	return '%s|%s' % (val, hmac.new(SECRET, val).hexdigest())
+
+
 
 
 # Data Schema for the users
@@ -195,7 +232,8 @@ app = webapp2.WSGIApplication([
 	('/', MainHandler),
 	('/signup', Signup),
 	('/welcome', Welcome),
-	('/login', Login)
+	('/login', Login),
+	('/logout', Logout)
 ], debug=True)
 
 
