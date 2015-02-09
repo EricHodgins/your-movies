@@ -126,30 +126,43 @@ class Signup(MainHandler):
 
 class Welcome(Signup):
 	def get(self):
+
 		cookie_val = self.request.cookies.get('user_id')
 		user_id = self.get_id(cookie_val)
 		hmac_hash = make_secure_val(user_id)
 		if cookie_val == hmac_hash:
 			u = User.get_by_id(int(user_id))
 			print '===='*20
-			print u.movies
-			self.render("welcome.html", username=u.name, movies=u.movies)
+			number_of_movies = len(u.movies)
+			self.render("welcome.html", username=u.name, movies=u.movies, number_of_movies=number_of_movies)
 		else:
 			self.redirect('/login')
 			return 
 			
 	def post(self):
+		remove_movie = self.request.get_all('remove')
 
 		movie = self.request.get('movie')
 		cookie_val = self.request.cookies.get('user_id')
 		user_id = self.get_id(cookie_val)
 		hmac_hash = make_secure_val(user_id)
 		u = User.get_by_id(int(user_id))
+
+		if remove_movie:
+			for r_movie in remove_movie:
+				for db_movie in u.movies:
+					if r_movie == db_movie:
+						u.movies.remove(db_movie)
+			u.put()
+
+
 		if cookie_val == hmac_hash and movie:
 			if movie not in u.movies:
 				u.movies.append(movie)
 				u.put()
-				self.render("welcome.html", username=u.name, movies=u.movies)
+
+				number_of_movies = len(u.movies)
+				self.render("welcome.html", username=u.name, movies=u.movies, number_of_movies=number_of_movies)
 		else:
 			error_message = "Oops, you forgot to enter a movie."
 			self.render("welcome.html", error_message=error_message, username=u.name, movies=u.movies)
