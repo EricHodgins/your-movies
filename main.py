@@ -18,6 +18,10 @@ import webapp2
 import os
 import jinja2
 import re
+import datetime
+import json
+
+import logging
 
 import random
 import hashlib
@@ -27,6 +31,7 @@ from string import letters
 
 
 from google.appengine.ext import db
+from google.appengine.api import memcache
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir),
@@ -101,7 +106,7 @@ class Signup(MainHandler):
 			self.render("signup.html", **params)
 		else:
 			if not self.check_if_user_exists():  # Also adds the user if it doesn't exist.
-				time.sleep(5)
+				time.sleep(1)
 				u = User.by_name(self.username)  #						<--------  Probably can refactor this.
 				cookie_val = make_secure_val(str(u.key().id()))
 				self.response.headers.add_header('Set-Cookie', '%s=%s; Path=/' % ('user_id', cookie_val))
@@ -110,7 +115,7 @@ class Signup(MainHandler):
 				self.redirect('/welcome')
 
 
-
+	#  could probably just check the cache.
 	def check_if_user_exists(self):
 		u = User.by_name(self.username)
 		if u:
@@ -123,6 +128,18 @@ class Signup(MainHandler):
 			return False
 
 
+def cache_user(user_id, update=False):
+	logging.error("HELLO")
+	key = user_id
+	movie_user = memcache.get(key)
+	if movie_user is None or update:
+		movie_user = User.get_by_id(int(user_id))
+		memcache.set(key, movie_user)
+
+	return movie_user
+
+
+
 
 class Welcome(Signup):
 	def get(self):
@@ -131,45 +148,77 @@ class Welcome(Signup):
 		user_id = self.get_id(cookie_val)
 		hmac_hash = make_secure_val(user_id)
 		if cookie_val == hmac_hash:
-			u = User.get_by_id(int(user_id))
-			print '===='*20
-			number_of_movies = len(u.movies)
-			self.render("welcome.html", username=u.name, movies=u.movies, number_of_movies=number_of_movies)
+			#u = User.get_by_id(int(user_id))
+			movie_user = cache_user(update=False, user_id=user_id)
+			movie_details = self.create_zipped_movie_dates(movie_user.movies, movie_user.added_movie_date)
+			self.number_of_movies = len(movie_user.movies)
+			self.render("welcome.html", username=movie_user.name, movie_details=movie_details, number_of_movies=self.number_of_movies)
 		else:
 			self.redirect('/login')
 			return 
 			
 	def post(self):
-		remove_movie = self.request.get_all('remove')
-
+		remove_movie = self.request.get_all('remove')  #  this comes back as a list of tuples. e.g. [("Gladiator", "Thu Feb 14 2015")]
 		movie = self.request.get('movie')
 		cookie_val = self.request.cookies.get('user_id')
 		user_id = self.get_id(cookie_val)
 		hmac_hash = make_secure_val(user_id)
 		u = User.get_by_id(int(user_id))
+		self.number_of_movies = len(u.movies)
 
 		if remove_movie:
 			for r_movie in remove_movie:
 				for db_movie in u.movies:
 					if r_movie == db_movie:
+						idx_movie = u.movies.index(db_movie)
 						u.movies.remove(db_movie)
+						del u.added_movie_date[idx_movie]
+
 			u.put()
+			cache_user(update=True, user_id=user_id)
+			error_message = "Removed %s" % remove_movie
+			movie_details = self.create_zipped_movie_dates(u.movies, u.added_movie_date)
+			self.number_of_movies = len(u.movies)
+			self.render("welcome.html", error_message=error_message, username=u.name, movie_details=movie_details, number_of_movies=self.number_of_movies)
+			return 
 
 
 		if cookie_val == hmac_hash and movie:
 			if movie not in u.movies:
+				fmt = "%c"
+				u.added_movie_date.append(datetime.datetime.now())
 				u.movies.append(movie)
 				u.put()
+				cache_user(update=True, user_id=user_id)
 
-				number_of_movies = len(u.movies)
-				self.render("welcome.html", username=u.name, movies=u.movies, number_of_movies=number_of_movies)
+				movie_details = self.create_zipped_movie_dates(u.movies, u.added_movie_date)
+				self.number_of_movies = len(u.movies)
+				
+				self.render("welcome.html", username=u.name, movie_details=movie_details, number_of_movies=self.number_of_movies)
+			else:
+				error_message = "You've already added that movie."
+				movie_details = self.create_zipped_movie_dates(u.movies, u.added_movie_date)
+				self.render("welcome.html", error_message=error_message, username=u.name, movie_details=movie_details, number_of_movies=self.number_of_movies)
 		else:
 			error_message = "Oops, you forgot to enter a movie."
-			self.render("welcome.html", error_message=error_message, username=u.name, movies=u.movies)
+			movie_details = self.create_zipped_movie_dates(u.movies, u.added_movie_date)
+			self.render("welcome.html", error_message=error_message, username=u.name, movie_details=movie_details, number_of_movies=self.number_of_movies)
 
 
 	def get_id(self, cookie_val):
-		return cookie_val.split('|')[0]
+		try:
+			return cookie_val.split('|')[0]
+		except:
+			self.redirect('/login')
+
+	def create_zipped_movie_dates(self, movies, added_movie_date):
+		fmt = "%c"
+		movie_date_fmt = []
+		for md in added_movie_date:
+			movie_date_fmt.append(md.strftime(fmt))
+
+		return zip(movies, movie_date_fmt)
+
 
 
 
@@ -197,6 +246,18 @@ class Logout(MainHandler):
 		self.redirect('/login')
 
 
+class JsonData(MainHandler):
+	def get(self):
+		all_user_data = db.GqlQuery("SELECT * FROM User")
+
+		json_list = []
+		for user in all_user_data:
+			j = dict(username=user.name, movies=user.movies)
+			json_list.append(j)
+
+		json_fmt = json.dumps(json_list)
+		self.write(json_fmt)
+		self.response.headers['Content-type'] = "text/json; charset=utf-8"
 
 #  Hashing functions to secure user at Signup
 def make_salt(length=5):
@@ -230,7 +291,8 @@ class User(db.Model):
 	pw_hash = db.StringProperty(required=True)
 	email = db.StringProperty()
 	movies = db.StringListProperty(default=None)
-	available = db.StringProperty()
+	added_movie_date = db.ListProperty(datetime.datetime)
+
 
 	@classmethod
 	def by_name(cls, name):
@@ -261,7 +323,8 @@ app = webapp2.WSGIApplication([
 	('/signup', Signup),
 	('/welcome', Welcome),
 	('/login', Login),
-	('/logout', Logout)
+	('/logout', Logout),
+	('/.json', JsonData)
 ], debug=True)
 
 

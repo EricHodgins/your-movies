@@ -4,24 +4,47 @@
 
 {% block content %}
 	<h1>Welcome, {{ username }}!</h1>
+	<h4>You have a total of {{ number_of_movies }} movies added.</h4>
 	<form action="/logout">
 		<input type="hidden">
-		<input class="logout-button" type="submit" value="logout">
+		<input class="logout-button" type="submit" value="Logout">
 	</form>
 	<form method="post">
-		<table>
-			<tr>
-				<td>Movie Request</td>
-				<td><input type="text" name="movie"></td>
-				<td style="color: red;">{{ error_message }}</td>
-			</tr>
-		</table>
-		<input type="submit" value="Add">
-
-		<ol>
-			{% for new_movie in movies %}
-			<li>{{ new_movie }}</li>
-			{% endfor %}
-		</ol>
+		<div>
+			<table class="submit-movie">
+				<tr>
+					<td>Add Movie Request</td>
+					<td><input type="text" name="movie"></td>
+					<td><input type="submit" value="Add"></td>
+					<td>{{ error_message }}</td>
+				</tr>
+			</table>
+		</div>
+	
+		<div class="add-movie-table">
+			<table class="movie-table">
+				<tr>
+					<th>Number</th>
+					<th>Movie</th>
+					<th>Date Added</th>
+					<th>Available To Watch</th>
+					<th>Remove?</th>
+				</tr>
+				{% set count = 1 %}
+				{% for new_movie in movie_details %}
+				<tr>
+					<td>{{ count }}</td>
+					<td>{{ new_movie[0] }}</td>
+					<td>{{ new_movie[1] }}</td>
+					<td>{{ new_movie[2] }}</td>
+					<td><input type="checkbox" name="remove" value="{{ new_movie[0] }}"></td>
+				</tr>
+				{% set count = count + 1 %}
+				{% endfor %}
+			</table>
+			<div class="remove-button">
+				<input type="submit" value="Remove">
+			</div>
+		</div>
 	</form>
 {% endblock %}

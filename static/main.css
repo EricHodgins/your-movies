@@ -1,3 +1,5 @@
+
+
 h1 {
 	text-align: center;
 	border-bottom: 3px solid #001;
@@ -6,37 +8,123 @@ h1 {
 }
 
 body {
-	background-color: #888;
+	background: linear-gradient(white, rgb(118, 170, 229));
+}
+
+.signup-div {
+	margin-bottom: 45%;
+}
+
+
+a {
+	font-family: sans-serif;
+	text-decoration: none;
+	color: rgb(91, 91, 186);
+}
+
+.login-signup {
+	text-align: center;
+	margin-top: 30px;
+}
+
+.login-table {
+	margin-bottom: 45%;
+}
+
+.login-div {
+/*	position: relative;
+	left: 51%;*/
+	text-align: center;
+}
+
+.signup-submit {
+/*	position: relative;
+	left: 52%;*/
+	margin-top: 20px;
+	text-align: center;
+}
+
+input[type="checkbox"] {
+	/* Double-sized Checkboxes */
+  -ms-transform: scale(2); /* IE */
+  -moz-transform: scale(2); /* FF */
+  -webkit-transform: scale(2); /* Safari and Chrome */
+  -o-transform: scale(2); /* Opera */
+  padding: 0px;
+}
+
+.remove-button {
+	position: relative;
+	margin-top: 27px;
+	left: 65%;
+}
+
+
+.submit-movie td {
+	padding: 10px;
+}
+
+
+.add-movie-table {
+	margin-top: 50px;
+	margin-bottom: 35%;
+}
+
+.movie-table {
+	font-size: 15px;
+	border: 1px solid blue;
+	border-collapse: collapse;
+}
+
+.movie-table th, .movie-table td {
+	border: solid 4px black;
+	padding: 25px;
 }
 
 table {
-	border: 1px solid #001;
 	font-family: sans-serif;
-	margin-bottom: 200px;
+	margin-bottom: 30px;
 	margin: auto;
-	padding: 50px;
+	padding: 25px;
+	border-collapse: collapse;
+}
+
+ol {
+	margin-left: 20%;
 }
 
 tr {
 	line-height: 30px;
 }
 
-input[type="submit"] {
+.logout-button {
 	position: relative;
-	margin-top: 25px;
-	left: 50%;
+	left: 30%;
+	border: 1px solid black;
+	font-size: 20px;
+	color: blue;
+	margin-left: 50%;
+	margin-bottom: 15px;
 }
+
+/*.copyright-footer {
+	position: absolute;
+	border-top: 1px solid #001;
+	bottom: 0
+	width:100%;
+}
+*/
 
 footer {
 	border-top: 1px solid #001;
-	position: absolute;
+	position: relative;
 	text-align: center;
 	line-height: 60px;
 	bottom: 0;
 	width: 100%;
-	height: 60px;
+	height: 10%;
 	font-size: 10px;
-	background-color: #717181;
+	background-color: rgb(116, 149, 188);
 }
 
 .error {

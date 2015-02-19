@@ -5,21 +5,29 @@
 {% block content %}
 	<h1>Movie Requests Login</h1>
 	<form method="post">
-		<table>
-			<tr>
-				<td>Username</td>
-				<td><input type="text" name="username" value="{{ username }}"></td>
-				<td class="error">
-					{{ error_username }}
-				</td>
-			</tr>
-			<tr>
-				<td>Password</td>
-				<td><input type="text" name="password" value=""></td>
-				<td class="error">
-					{{ error_password }}
-				</td>
-			</tr>
-		</table>
-		<input type="submit" value="login">
+		<div class="login-table">
+			<table>
+				<tr>
+					<td>Username</td>
+					<td><input type="text" name="username" value="{{ username }}"></td>
+					<td class="error">
+						{{ error_username }}
+					</td>
+				</tr>
+				<tr>
+					<td>Password</td>
+					<td><input type="password" name="password" value=""></td>
+					<td class="error">
+						{{ error_password }}
+					</td>
+				</tr>
+			</table>
+			<div class="login-div">
+				<input type="submit" value="login">
+			</div>
+			<div class="login-signup">
+				<a href="/signup">Signup</a>
+			</div>
+		</div>
+	</form>
 {% endblock %}
